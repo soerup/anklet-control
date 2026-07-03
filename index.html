@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anklet</title>
+<style>
+  :root{
+    --bg:#0b0d12; --card:#141824; --line:#242b3b;
+    --txt:#eef1f8; --dim:#7f8aa3; --accent:#ff4d2e; --live:#37e6b0; --cyan:#25d0e6;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:
+      radial-gradient(120% 60% at 50% -10%, #17203a 0%, var(--bg) 55%);
+    color:var(--txt); min-height:100vh;
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    padding:max(24px,env(safe-area-inset-top)) 20px 48px;
+    -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
+  }
+  header{margin:0 0 22px}
+  h1{font-size:26px; font-weight:680; letter-spacing:-.4px; margin:0}
+  .sub{color:var(--dim); font-size:13px; margin:3px 0 0}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:14px}
+  .lab{font-size:11px; text-transform:uppercase; letter-spacing:1.4px; color:var(--dim); margin:0 0 14px}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  button{font:inherit; color:var(--txt); border:none; cursor:pointer}
+  .connect{width:100%; background:var(--accent); color:#fff; font-weight:640; font-size:16px;
+    padding:16px; border-radius:14px; letter-spacing:.2px; transition:.15s}
+  .connect.on{background:transparent; border:1px solid var(--line); color:var(--dim)}
+  .dot{width:9px; height:9px; border-radius:50%; background:#39415a; flex:0 0 auto}
+  .dot.live{background:var(--live); box-shadow:0 0 0 0 var(--live); animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(55,230,176,.5)}70%{box-shadow:0 0 0 8px rgba(55,230,176,0)}100%{box-shadow:0 0 0 0 rgba(55,230,176,0)}}
+  .status{color:var(--dim); font-size:13.5px}
+  .pwr{padding:11px 20px; border-radius:12px; border:1px solid var(--line); background:transparent; font-weight:640}
+  .pwr.on{background:var(--cyan); color:#04222a; border-color:transparent}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .pat{padding:18px 10px; border-radius:13px; border:1px solid var(--line); background:#191f2e;
+    font-weight:600; text-align:center; transition:.12s}
+  .pat.sel{border-color:var(--accent); color:var(--accent); background:#22140f}
+  label{display:flex; justify-content:space-between; color:var(--dim); font-size:13px; margin:18px 0 9px}
+  label:first-of-type{margin-top:2px}
+  label b{color:var(--txt); font-weight:600; font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%; accent-color:var(--accent); height:26px}
+  #stack [disabled]{opacity:.35; pointer-events:none}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Anklet</h1>
+    <p class="sub">Bluetooth control &middot; open this page in Bluefy</p>
+  </header>
+
+  <button id="connect" class="connect">Connect</button>
+
+  <div id="stack">
+    <div class="card" data-panel disabled>
+      <div class="row">
+        <div class="row" style="gap:9px"><span id="dot" class="dot"></span><span id="status" class="status">Not connected</span></div>
+        <button id="power" class="pwr">Off</button>
+      </div>
+    </div>
+
+    <div class="card" data-panel disabled>
+      <p class="lab">Pattern</p>
+      <div class="grid">
+        <button class="pat" data-p="0">All blink</button>
+        <button class="pat" data-p="1">Chase</button>
+        <button class="pat" data-p="2">Alternate</button>
+        <button class="pat" data-p="3">Breathe</button>
+      </div>
+    </div>
+
+    <div class="card" data-panel disabled>
+      <p class="lab">Adjust</p>
+      <label>Brightness <b id="bval">120</b></label>
+      <input id="bright" type="range" min="0" max="255" value="120">
+      <label>Speed <b id="sval">128</b></label>
+      <input id="speed" type="range" min="8" max="255" value="128">
+    </div>
+  </div>
+
+<script>
+  const SVC = '19b10000-e8f2-537e-4f6c-d104768a1214';
+  const U = {
+    pattern:'19b10001-e8f2-537e-4f6c-d104768a1214',
+    bright: '19b10002-e8f2-537e-4f6c-d104768a1214',
+    power:  '19b10003-e8f2-537e-4f6c-d104768a1214',
+    speed:  '19b10004-e8f2-537e-4f6c-d104768a1214'
+  };
+  const $ = id => document.getElementById(id);
+  let device, ch = {};
+
+  function enable(on){ document.querySelectorAll('[data-panel]').forEach(p =>
+    on ? p.removeAttribute('disabled') : p.setAttribute('disabled','')); }
+  function setConn(live){
+    $('dot').classList.toggle('live', live);
+    $('status').textContent = live ? (device && device.name || 'Connected') : 'Not connected';
+    $('connect').textContent = live ? 'Disconnect' : 'Connect';
+    $('connect').classList.toggle('on', live);
+    enable(live);
+  }
+  function uiPattern(p){ document.querySelectorAll('.pat').forEach(b => b.classList.toggle('sel', +b.dataset.p === p)); }
+  function uiPower(on){ $('power').classList.toggle('on', !!on); $('power').textContent = on ? 'On' : 'Off'; }
+
+  async function connect(){
+    try{
+      device = await navigator.bluetooth.requestDevice({ filters:[{ services:[SVC] }] });
+      device.addEventListener('gattserverdisconnected', () => setConn(false));
+      const srv = await device.gatt.connect();
+      const s = await srv.getPrimaryService(SVC);
+      ch.pattern = await s.getCharacteristic(U.pattern);
+      ch.bright  = await s.getCharacteristic(U.bright);
+      ch.power   = await s.getCharacteristic(U.power);
+      ch.speed   = await s.getCharacteristic(U.speed);
+
+      uiPattern((await ch.pattern.readValue()).getUint8(0));
+      const b = (await ch.bright.readValue()).getUint8(0); $('bright').value = b; $('bval').textContent = b;
+      uiPower((await ch.power.readValue()).getUint8(0));
+      const sp = (await ch.speed.readValue()).getUint8(0); $('speed').value = sp; $('sval').textContent = sp;
+
+      // reflect physical-button changes back into the UI
+      await ch.pattern.startNotifications();
+      ch.pattern.addEventListener('characteristicvaluechanged', e => uiPattern(e.target.value.getUint8(0)));
+      await ch.power.startNotifications();
+      ch.power.addEventListener('characteristicvaluechanged', e => uiPower(e.target.value.getUint8(0)));
+
+      setConn(true);
+    }catch(err){ if(err.name !== 'NotFoundError') $('status').textContent = err.message; }
+  }
+
+  async function writeByte(c, v){ try{ if(c) await c.writeValue(Uint8Array.of(v & 255)); }catch(e){} }
+  function throttle(fn, ms){ let last = 0, t; return v => {
+    const now = Date.now();
+    if(now - last >= ms){ last = now; fn(v); }
+    else { clearTimeout(t); t = setTimeout(() => { last = Date.now(); fn(v); }, ms); }
+  };}
+  const wBright = throttle(v => writeByte(ch.bright, v), 40);
+  const wSpeed  = throttle(v => writeByte(ch.speed,  v), 40);
+
+  $('connect').onclick = () =>
+    (device && device.gatt.connected) ? device.gatt.disconnect() : connect();
+  $('power').onclick = () => { const on = !$('power').classList.contains('on'); uiPower(on); writeByte(ch.power, on ? 1 : 0); };
+  document.querySelectorAll('.pat').forEach(b =>
+    b.onclick = () => { const p = +b.dataset.p; uiPattern(p); writeByte(ch.pattern, p); });
+  $('bright').oninput = e => { $('bval').textContent = e.target.value; wBright(+e.target.value); };
+  $('speed').oninput  = e => { $('sval').textContent = e.target.value; wSpeed(+e.target.value); };
+
+  if(!navigator.bluetooth) $('status').textContent = 'No Web Bluetooth — open this page in Bluefy';
+</script>
+</body>
+</html>
