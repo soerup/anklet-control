@@ -35,8 +35,8 @@
   .pwr{padding:11px 20px; border-radius:12px; border:1px solid var(--line); background:transparent; font-weight:640}
   .pwr.on{background:var(--cyan); color:#04222a; border-color:transparent}
   .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .pat{padding:18px 10px; border-radius:13px; border:1px solid var(--line); background:#191f2e;
-    font-weight:600; text-align:center; transition:.12s}
+  .pat{padding:16px 10px; border-radius:13px; border:1px solid var(--line); background:#191f2e;
+    font-weight:600; text-align:center; transition:.12s; font-size:15px}
   .pat.sel{border-color:var(--accent); color:var(--accent); background:#22140f}
   label{display:flex; justify-content:space-between; color:var(--dim); font-size:13px; margin:18px 0 9px}
   label:first-of-type{margin-top:2px}
@@ -62,12 +62,16 @@
     </div>
 
     <div class="card" data-panel disabled>
-      <p class="lab">Pattern</p>
+      <p class="lab">Effect</p>
       <div class="grid">
         <button class="pat" data-p="0">All blink</button>
         <button class="pat" data-p="1">Chase</button>
-        <button class="pat" data-p="2">Alternate</button>
-        <button class="pat" data-p="3">Breathe</button>
+        <button class="pat" data-p="2">Comet</button>
+        <button class="pat" data-p="3">Bounce</button>
+        <button class="pat" data-p="4">Sparkle</button>
+        <button class="pat" data-p="5">Alternate</button>
+        <button class="pat" data-p="6">Wave</button>
+        <button class="pat" data-p="7">Build-up</button>
       </div>
     </div>
 
@@ -119,7 +123,6 @@
       uiPower((await ch.power.readValue()).getUint8(0));
       const sp = (await ch.speed.readValue()).getUint8(0); $('speed').value = sp; $('sval').textContent = sp;
 
-      // reflect physical-button changes back into the UI
       await ch.pattern.startNotifications();
       ch.pattern.addEventListener('characteristicvaluechanged', e => uiPattern(e.target.value.getUint8(0)));
       await ch.power.startNotifications();
