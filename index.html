@@ -7,73 +7,68 @@
 <style>
   :root{
     --bg:#0b0d12; --card:#141824; --line:#242b3b;
-    --txt:#eef1f8; --dim:#7f8aa3; --accent:#ff4d2e; --live:#37e6b0; --cyan:#25d0e6; --violet:#b06bff;
+    --txt:#eef1f8; --dim:#7f8aa3; --accent:#ff4d2e; --live:#37e6b0; --violet:#b06bff;
   }
   *{box-sizing:border-box}
   body{
-    margin:0; background:
-      radial-gradient(120% 60% at 50% -10%, #17203a 0%, var(--bg) 55%);
+    margin:0; background:radial-gradient(120% 55% at 50% -10%, #17203a 0%, var(--bg) 55%);
     color:var(--txt); min-height:100vh;
-    font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
-    padding:max(24px,env(safe-area-inset-top)) 20px 48px;
+    font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    padding:max(16px,env(safe-area-inset-top)) 16px 20px;
     -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
   }
-  header{margin:0 0 22px}
-  h1{font-size:26px; font-weight:680; letter-spacing:-.4px; margin:0}
-  .sub{color:var(--dim); font-size:13px; margin:3px 0 0}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:14px}
-  .lab{font-size:11px; text-transform:uppercase; letter-spacing:1.4px; color:var(--dim); margin:0 0 14px}
-  .row{display:flex; align-items:center; justify-content:space-between; gap:12px}
-  button{font:inherit; color:var(--txt); border:none; cursor:pointer}
-  .connect{width:100%; background:var(--accent); color:#fff; font-weight:640; font-size:16px;
-    padding:16px; border-radius:14px; letter-spacing:.2px; transition:.15s}
-  .connect.on{background:transparent; border:1px solid var(--line); color:var(--dim)}
-  .dot{width:9px; height:9px; border-radius:50%; background:#39415a; flex:0 0 auto}
+
+  /* compact top bar: status on the left, connect on the right */
+  .bar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+  .left{display:flex; align-items:center; gap:10px; min-width:0}
+  .ttl{font-size:18px; font-weight:680; letter-spacing:-.3px; line-height:1}
+  .status{font-size:12px; color:var(--dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .dot{width:10px; height:10px; border-radius:50%; background:#39415a; flex:0 0 auto}
   .dot.live{background:var(--live); box-shadow:0 0 0 0 var(--live); animation:pulse 2s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(55,230,176,.5)}70%{box-shadow:0 0 0 8px rgba(55,230,176,0)}100%{box-shadow:0 0 0 0 rgba(55,230,176,0)}}
-  .status{color:var(--dim); font-size:13.5px}
-  .pwr{padding:11px 20px; border-radius:12px; border:1px solid var(--line); background:transparent; font-weight:640}
-  .pwr.on{background:var(--cyan); color:#04222a; border-color:transparent}
-  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:9px}
-  .pat{padding:16px 4px; border-radius:13px; border:1px solid var(--line); background:#191f2e;
-    font-weight:600; text-align:center; transition:.12s; font-size:14px; min-height:56px;
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(55,230,176,.5)}70%{box-shadow:0 0 0 7px rgba(55,230,176,0)}100%{box-shadow:0 0 0 0 rgba(55,230,176,0)}}
+  .connect{flex:0 0 auto; background:var(--accent); color:#fff; font-weight:640; font-size:15px;
+    padding:11px 18px; border:none; border-radius:12px; cursor:pointer}
+  .connect.on{background:transparent; border:1px solid var(--line); color:var(--dim)}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:11px}
+  .lab{font-size:11px; text-transform:uppercase; letter-spacing:1.3px; color:var(--dim); margin:0 0 11px}
+  button{font:inherit; color:var(--txt); border:none; cursor:pointer}
+
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+  .pat{padding:0 4px; min-height:50px; border-radius:12px; border:1px solid var(--line); background:#191f2e;
+    font-weight:600; font-size:14px; text-align:center; transition:.12s;
     display:flex; align-items:center; justify-content:center}
   .pat.sel{border-color:var(--accent); color:var(--accent); background:#22140f}
-  .pat.off.sel{border-color:var(--dim); color:var(--txt); background:#20242e}
   .side .pat.sel{border-color:var(--violet); color:var(--violet); background:#1c1430}
-  .side .pat.off.sel{border-color:var(--dim); color:var(--txt); background:#20242e}
+  .pat.off.sel, .side .pat.off.sel{border-color:var(--dim); color:var(--txt); background:#20242e}
 
-  /* big touch-friendly sliders */
-  .slabel{display:flex; justify-content:space-between; color:var(--dim); font-size:14px; margin:20px 0 12px}
+  .slabel{display:flex; justify-content:space-between; color:var(--dim); font-size:13px; margin:14px 0 9px}
   .slabel:first-of-type{margin-top:2px}
-  .slabel b{color:var(--txt); font-weight:600; font-variant-numeric:tabular-nums; font-size:16px}
-  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:48px; background:transparent; margin:0 }
-  input[type=range]::-webkit-slider-runnable-track{ height:16px; border-radius:8px; background:#2a3446 }
-  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:44px; height:44px; border-radius:50%;
-    background:var(--accent); margin-top:-14px; border:3px solid var(--bg); box-shadow:0 3px 10px rgba(0,0,0,.55) }
-  input[type=range]::-moz-range-track{ height:16px; border-radius:8px; background:#2a3446 }
-  input[type=range]::-moz-range-thumb{ width:44px; height:44px; border-radius:50%; background:var(--accent);
+  .slabel b{color:var(--txt); font-weight:600; font-variant-numeric:tabular-nums; font-size:15px}
+  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:44px; background:transparent; margin:0 }
+  input[type=range]::-webkit-slider-runnable-track{ height:15px; border-radius:8px; background:#2a3446 }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:42px; height:42px; border-radius:50%;
+    background:var(--accent); margin-top:-13px; border:3px solid var(--bg); box-shadow:0 3px 10px rgba(0,0,0,.55) }
+  input[type=range]::-moz-range-track{ height:15px; border-radius:8px; background:#2a3446 }
+  input[type=range]::-moz-range-thumb{ width:42px; height:42px; border-radius:50%; background:var(--accent);
     border:3px solid var(--bg); box-shadow:0 3px 10px rgba(0,0,0,.55) }
 
   #stack [disabled]{opacity:.35; pointer-events:none}
 </style>
 </head>
 <body>
-  <header>
-    <h1>Marius Borg Høiby</h1>
-    <p class="sub">Fottlenke kontroll</p>
-  </header>
-
-  <button id="connect" class="connect">Connect</button>
-
-  <div id="stack">
-    <div class="card" data-panel disabled>
-      <div class="row">
-        <div class="row" style="gap:9px"><span id="dot" class="dot"></span><span id="status" class="status">Not connected</span></div>
-        <button id="power" class="pwr">Off</button>
+  <div class="bar">
+    <div class="left">
+      <span id="dot" class="dot"></span>
+      <div style="min-width:0">
+        <div class="ttl">Anklet</div>
+        <div id="status" class="status">Not connected</div>
       </div>
     </div>
+    <button id="connect" class="connect">Connect</button>
+  </div>
 
+  <div id="stack">
     <div class="card" data-panel disabled>
       <p class="lab">Main effect &middot; 6 LEDs</p>
       <div class="grid">
@@ -115,7 +110,6 @@
   const U = {
     pattern:'19b10001-e8f2-537e-4f6c-d104768a1214',
     bright: '19b10002-e8f2-537e-4f6c-d104768a1214',
-    power:  '19b10003-e8f2-537e-4f6c-d104768a1214',
     speed:  '19b10004-e8f2-537e-4f6c-d104768a1214',
     side:   '19b10005-e8f2-537e-4f6c-d104768a1214'
   };
@@ -133,7 +127,6 @@
   }
   function uiPattern(p){ document.querySelectorAll('.pat[data-p]').forEach(b => b.classList.toggle('sel', +b.dataset.p === p)); }
   function uiSide(s){ document.querySelectorAll('.pat[data-s]').forEach(b => b.classList.toggle('sel', +b.dataset.s === s)); }
-  function uiPower(on){ $('power').classList.toggle('on', !!on); $('power').textContent = on ? 'On' : 'Off'; }
 
   async function connect(){
     try{
@@ -143,22 +136,18 @@
       const s = await srv.getPrimaryService(SVC);
       ch.pattern = await s.getCharacteristic(U.pattern);
       ch.bright  = await s.getCharacteristic(U.bright);
-      ch.power   = await s.getCharacteristic(U.power);
       ch.speed   = await s.getCharacteristic(U.speed);
       ch.side    = await s.getCharacteristic(U.side);
 
       uiPattern((await ch.pattern.readValue()).getUint8(0));
       uiSide((await ch.side.readValue()).getUint8(0));
       const b = (await ch.bright.readValue()).getUint8(0); $('bright').value = b; $('bval').textContent = b;
-      uiPower((await ch.power.readValue()).getUint8(0));
       const sp = (await ch.speed.readValue()).getUint8(0); $('speed').value = sp; $('sval').textContent = sp;
 
       await ch.pattern.startNotifications();
       ch.pattern.addEventListener('characteristicvaluechanged', e => uiPattern(e.target.value.getUint8(0)));
       await ch.side.startNotifications();
       ch.side.addEventListener('characteristicvaluechanged', e => uiSide(e.target.value.getUint8(0)));
-      await ch.power.startNotifications();
-      ch.power.addEventListener('characteristicvaluechanged', e => uiPower(e.target.value.getUint8(0)));
 
       setConn(true);
     }catch(err){ if(err.name !== 'NotFoundError') $('status').textContent = err.message; }
@@ -175,7 +164,6 @@
 
   $('connect').onclick = () =>
     (device && device.gatt.connected) ? device.gatt.disconnect() : connect();
-  $('power').onclick = () => { const on = !$('power').classList.contains('on'); uiPower(on); writeByte(ch.power, on ? 1 : 0); };
   document.querySelectorAll('.pat[data-p]').forEach(b =>
     b.onclick = () => { const p = +b.dataset.p; uiPattern(p); writeByte(ch.pattern, p); });
   document.querySelectorAll('.pat[data-s]').forEach(b =>
@@ -183,7 +171,7 @@
   $('bright').oninput = e => { $('bval').textContent = e.target.value; wBright(+e.target.value); };
   $('speed').oninput  = e => { $('sval').textContent = e.target.value; wSpeed(+e.target.value); };
 
-  if(!navigator.bluetooth) $('status').textContent = 'No Web Bluetooth — open this page in Bluefy';
+  if(!navigator.bluetooth) $('status').textContent = 'No Web Bluetooth — open in Bluefy';
 </script>
 </body>
 </html>
