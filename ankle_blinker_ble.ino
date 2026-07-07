@@ -1,11 +1,11 @@
-// ankle_blinker_ble_v3.ino
+// ankle_blinker_ble_v4.ino
 // WEMOS LOLIN32 Lite (ESP32, core 3.x) — 6 main LED channels + 1 independent side LED, BLE (Bluefy).
 // No button, no piezo. Control is entirely over BLE; the slide switch is the real on/off.
-// On power-up both the main effect and the side-LED pattern start on a RANDOM choice.
+// Power-up starts on a RANDOM main effect and a RANDOM (active) side pattern.
 //
-// Main LEDs : GPIO 32,33,25,26,27,14 (indices 0..5) — run the shared effects.
-// Side LED  : GPIO 19 (purple, on the side) — its own blink patterns, shares brightness + speed.
-// Status    : onboard LED (GPIO22, active-low) lit while a BLE client is connected.
+// Main LEDs : GPIO 32,33,25,26,27,14 (indices 0..5). Effects 0..7, plus "Off" = 8 (main dark).
+// Side LED  : GPIO 19 (purple). Patterns: 0 Off, 1 50/50, 2 Fast-fast-slow, 3 Strobe, 4 Breathe, 5 SOS.
+// Shared    : brightness + speed apply to both.  Status LED: GPIO22 (active-low) = BLE connected.
 // Power     : 3–4× Ladda (NiMH) -> JST BAT (+ header GND). Slide switch for off.
 //             NEVER plug USB while the pack is connected.
 //
@@ -21,10 +21,11 @@ const uint8_t SIDE     = 19;                         // purple side LED (indepen
 const uint8_t LED_STAT = 22;                         // onboard, active-low
 
 // ---------- shared state ----------
-uint8_t       pattern      = 0;                      // main effect (random in setup)
-const uint8_t N_PATTERNS   = 8;
-uint8_t       sidePattern  = 2;                      // side rhythm (random in setup)
-const uint8_t N_SIDE       = 7;
+uint8_t       pattern      = 0;                      // 0..7 effects, 8 = off (random in setup)
+const uint8_t N_EFFECTS    = 8;                      // effects available to random start
+const uint8_t N_PATTERNS   = 9;                      // effects + off
+uint8_t       sidePattern  = 1;                      // 0 off, 1..5 rhythms (random in setup)
+const uint8_t N_SIDE       = 6;
 uint8_t       brightness   = 120;                    // 0..255  (shared)
 uint8_t       speed        = 128;                    // 8..255, 128 = 1x (shared)
 bool          powerOn      = true;
@@ -46,8 +47,9 @@ NimBLECharacteristic *chPattern, *chBright, *chPower, *chSpeed, *chSide;
 // ---------- LED helpers ----------
 void writePin(uint8_t pin, uint8_t v) { ledcWrite(pin, (uint16_t)v * brightness / 255); }
 void writeLed(uint8_t i, uint8_t v)   { writePin(LED[i], v); }
-void setAll(uint8_t v) { for (uint8_t i = 0; i < N; i++) writeLed(i, v); }
-void clearAll()        { for (uint8_t i = 0; i < N; i++) ledcWrite(LED[i], 0); ledcWrite(SIDE, 0); }
+void setAll(uint8_t v)  { for (uint8_t i = 0; i < N; i++) writeLed(i, v); }
+void clearMain()        { for (uint8_t i = 0; i < N; i++) ledcWrite(LED[i], 0); }
+void clearAll()         { clearMain(); ledcWrite(SIDE, 0); }
 
 // ---------- state setters ----------
 void notifyByte(NimBLECharacteristic* c, uint8_t v) { c->setValue(&v, 1); c->notify(); }
@@ -140,14 +142,15 @@ void runPattern() {
     case 5: patAlternate(es); break;
     case 6: patWave(es);      break;
     case 7: patBuildUp(es);   break;
+    case 8: clearMain();      break;   // main 6 off (side keeps running)
   }
 }
 
-// ---------- side LED patterns (single channel, es = speed-scaled elapsed ms) ----------
+// ---------- side LED patterns (single channel) ----------
 void patSide5050(unsigned long es)  { writePin(SIDE, ((es / 500) % 2) ? 255 : 0); }
 void patSideFFS(unsigned long es) {                 // blink, blink, pause
   const unsigned long u = 150;
-  unsigned long c = es % (u * 6);                   // on,off,on,off(x3)
+  unsigned long c = es % (u * 6);
   bool on = (c < u) || (c >= 2 * u && c < 3 * u);
   writePin(SIDE, on ? 255 : 0);
 }
@@ -157,7 +160,7 @@ void patSideBreathe(unsigned long es) {
   writePin(SIDE, (p < 1000) ? (p * 255 / 1000) : ((2000 - p) * 255 / 1000));
 }
 void patSideSOS(unsigned long es) {                 // Morse: · · ·  — — —  · · ·
-  const uint16_t U = 200;                           // time unit (ms) before speed scaling
+  const uint16_t U = 200;
   static const uint8_t on_[18]  = {1,0,1,0,1,0, 1,0,1,0,1,0, 1,0,1,0,1,0};
   static const uint8_t dur_[18] = {1,1,1,1,1,3, 3,1,3,1,3,3, 1,1,1,1,1,7};
   unsigned long total = 0; for (uint8_t i = 0; i < 18; i++) total += dur_[i];
@@ -170,13 +173,12 @@ void patSideSOS(unsigned long es) {                 // Morse: · · ·  — — 
 void runSide() {
   unsigned long es = (millis() - tSide) * speed / 128;
   switch (sidePattern) {
-    case 0: ledcWrite(SIDE, 0);   break;   // off
-    case 1: writePin(SIDE, 255);  break;   // solid
-    case 2: patSide5050(es);      break;
-    case 3: patSideFFS(es);       break;
-    case 4: patSideStrobe(es);    break;
-    case 5: patSideBreathe(es);   break;
-    case 6: patSideSOS(es);       break;
+    case 0: ledcWrite(SIDE, 0);  break;   // off
+    case 1: patSide5050(es);     break;
+    case 2: patSideFFS(es);      break;
+    case 3: patSideStrobe(es);   break;
+    case 4: patSideBreathe(es);  break;
+    case 5: patSideSOS(es);      break;
   }
 }
 
@@ -193,9 +195,9 @@ void setup() {
   for (uint8_t i = 0; i < N; i++) { ledcAttach(LED[i], 5000, 8); ledcWrite(LED[i], 0); }
   ledcAttach(SIDE, 5000, 8); ledcWrite(SIDE, 0);
 
-  NimBLEDevice::init("Anklet");                        // RF active -> esp_random() has entropy
-  pattern     = esp_random() % N_PATTERNS;             // random main effect on power-up
-  sidePattern = 1 + (esp_random() % (N_SIDE - 1));     // random side rhythm (skip "off")
+  NimBLEDevice::init("Anklet");
+  pattern     = esp_random() % N_EFFECTS;              // random effect (never "off")
+  sidePattern = 1 + (esp_random() % (N_SIDE - 1));     // random side rhythm (never "off")
 
   NimBLEServer* srv = NimBLEDevice::createServer();
   srv->setCallbacks(new ServerCB());

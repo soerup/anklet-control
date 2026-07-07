@@ -34,22 +34,34 @@
   .status{color:var(--dim); font-size:13.5px}
   .pwr{padding:11px 20px; border-radius:12px; border:1px solid var(--line); background:transparent; font-weight:640}
   .pwr.on{background:var(--cyan); color:#04222a; border-color:transparent}
-  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .pat{padding:16px 10px; border-radius:13px; border:1px solid var(--line); background:#191f2e;
-    font-weight:600; text-align:center; transition:.12s; font-size:15px}
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:9px}
+  .pat{padding:16px 4px; border-radius:13px; border:1px solid var(--line); background:#191f2e;
+    font-weight:600; text-align:center; transition:.12s; font-size:14px; min-height:56px;
+    display:flex; align-items:center; justify-content:center}
   .pat.sel{border-color:var(--accent); color:var(--accent); background:#22140f}
+  .pat.off.sel{border-color:var(--dim); color:var(--txt); background:#20242e}
   .side .pat.sel{border-color:var(--violet); color:var(--violet); background:#1c1430}
-  label{display:flex; justify-content:space-between; color:var(--dim); font-size:13px; margin:18px 0 9px}
-  label:first-of-type{margin-top:2px}
-  label b{color:var(--txt); font-weight:600; font-variant-numeric:tabular-nums}
-  input[type=range]{width:100%; accent-color:var(--accent); height:26px}
+  .side .pat.off.sel{border-color:var(--dim); color:var(--txt); background:#20242e}
+
+  /* big touch-friendly sliders */
+  .slabel{display:flex; justify-content:space-between; color:var(--dim); font-size:14px; margin:20px 0 12px}
+  .slabel:first-of-type{margin-top:2px}
+  .slabel b{color:var(--txt); font-weight:600; font-variant-numeric:tabular-nums; font-size:16px}
+  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:48px; background:transparent; margin:0 }
+  input[type=range]::-webkit-slider-runnable-track{ height:16px; border-radius:8px; background:#2a3446 }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:44px; height:44px; border-radius:50%;
+    background:var(--accent); margin-top:-14px; border:3px solid var(--bg); box-shadow:0 3px 10px rgba(0,0,0,.55) }
+  input[type=range]::-moz-range-track{ height:16px; border-radius:8px; background:#2a3446 }
+  input[type=range]::-moz-range-thumb{ width:44px; height:44px; border-radius:50%; background:var(--accent);
+    border:3px solid var(--bg); box-shadow:0 3px 10px rgba(0,0,0,.55) }
+
   #stack [disabled]{opacity:.35; pointer-events:none}
 </style>
 </head>
 <body>
   <header>
-    <h1>Marius Borg Høiby</h1>
-    <p class="sub">Fottlenke kontroll</p>
+    <h1>Anklet</h1>
+    <p class="sub">Bluetooth control &middot; open this page in Bluefy</p>
   </header>
 
   <button id="connect" class="connect">Connect</button>
@@ -65,35 +77,35 @@
     <div class="card" data-panel disabled>
       <p class="lab">Main effect &middot; 6 LEDs</p>
       <div class="grid">
-        <button class="pat" data-p="0">All blink</button>
+        <button class="pat" data-p="0">All</button>
         <button class="pat" data-p="1">Chase</button>
         <button class="pat" data-p="2">Comet</button>
         <button class="pat" data-p="3">Bounce</button>
         <button class="pat" data-p="4">Sparkle</button>
-        <button class="pat" data-p="5">Alternate</button>
+        <button class="pat" data-p="5">Alt</button>
         <button class="pat" data-p="6">Wave</button>
-        <button class="pat" data-p="7">Build-up</button>
+        <button class="pat" data-p="7">Build</button>
+        <button class="pat off" data-p="8">Off</button>
       </div>
     </div>
 
     <div class="card side" data-panel disabled>
       <p class="lab">Side LED &middot; purple</p>
       <div class="grid">
-        <button class="pat sd" data-s="0">Off</button>
-        <button class="pat sd" data-s="1">Solid</button>
-        <button class="pat sd" data-s="2">50 / 50</button>
-        <button class="pat sd" data-s="3">Fast-fast-slow</button>
-        <button class="pat sd" data-s="4">Strobe</button>
-        <button class="pat sd" data-s="5">Breathe</button>
-        <button class="pat sd" data-s="6">SOS</button>
+        <button class="pat sd" data-s="1">50 / 50</button>
+        <button class="pat sd" data-s="2">F-F-S</button>
+        <button class="pat sd" data-s="3">Strobe</button>
+        <button class="pat sd" data-s="4">Breathe</button>
+        <button class="pat sd" data-s="5">SOS</button>
+        <button class="pat sd off" data-s="0">Off</button>
       </div>
     </div>
 
     <div class="card" data-panel disabled>
       <p class="lab">Adjust &middot; both</p>
-      <label>Brightness <b id="bval">120</b></label>
+      <div class="slabel">Brightness <b id="bval">120</b></div>
       <input id="bright" type="range" min="0" max="255" value="120">
-      <label>Speed <b id="sval">128</b></label>
+      <div class="slabel">Speed <b id="sval">128</b></div>
       <input id="speed" type="range" min="8" max="255" value="128">
     </div>
   </div>
